@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>AI Agent</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="chat">
+    <div id="messages"></div>
+    <div id="bottom">
+      <input type="text" id="input" placeholder="Ask me anything..." />
+      <button onclick="send()">Send</button>
+    </div>
+  </div>
+
+  <script>
+    async function send() {
+      const input = document.getElementById("input");
+      const text = input.value.trim();
+      if (!text) return;
+
+      appendMessage("user", text);
+      input.value = "";
+
+      const res = await fetch("http://localhost:5000/ask", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ question: text })
+      });
+
+      const data = await res.json();
+      appendMessage("bot", data.answer);
+    }
+
+  /*  <!-- function appendMessage(role, text) {
+      const msg = document.createElement("div");
+      msg.className = "msg " + role;
+
+
+      msg.textContent = text;
+      document.getElementById("messages").appendChild(msg);
+      document.getElementById("messages").scrollTop = document.getElementById("messages").scrollHeight;
+    } */
+
+    function appendMessage(role, text) {
+  const msg = document.createElement("div");
+  msg.className = "msg " + role;
+
+   // Trim trailing punctuation (dot, comma, !, ?) only if at the end of the URL
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
+  const linkedText = text.replace(urlRegex, (url) => {
+    // Remove trailing dot, comma, exclamation, question mark if present
+    const cleanUrl = url.replace(/[.,!?]+$/, "");
+    return `<a href="${cleanUrl}" target="_blank">${cleanUrl}</a>`;
+  });
+
+
+
+  msg.innerHTML = linkedText; // render links as HTML
+  document.getElementById("messages").appendChild(msg);
+  document.getElementById("messages").scrollTop = document.getElementById("messages").scrollHeight;
+}
+
+  </script>
+</body>
+</html>

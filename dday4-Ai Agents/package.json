@@ -10,6 +10,9 @@
   "description": "",
   "dependencies": {
     "@google/genai": "^1.15.0",
+    "cors": "^2.8.5",
+    "express": "^5.1.0",
+    "path": "^0.12.7",
     "readline-sync": "^1.4.10"
   }
 }
