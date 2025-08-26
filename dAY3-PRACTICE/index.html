@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Overlord's Sanctum</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-glow: #00ffff; /* Cyan-blue glow */
+            --dark-bg: #0a0a14;
+            --container-bg: rgba(20, 20, 35, 0.85);
+            --text-color: #e0e0e0;
+            --border-color: rgba(0, 255, 255, 0.3);
+            --button-bg: transparent;
+            --button-hover-bg: rgba(0, 255, 255, 0.1);
+            --error-color: #ff4d4d;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--dark-bg);
+            color: var(--text-color);
+            font-family: 'Roboto Mono', monospace;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        #bg-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+
+        .oracle-container {
+            width: 90%;
+            max-width: 800px;
+            background: var(--container-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 2.5rem;
+            box-shadow: 0 0 40px rgba(0, 255, 255, 0.2), inset 0 0 15px rgba(0, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            animation: fadeIn 1.5s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .header h1 {
+            font-family: 'Orbitron', sans-serif;
+            color: var(--primary-glow);
+            font-size: 2.5rem;
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            text-shadow: 0 0 5px var(--primary-glow), 0 0 10px var(--primary-glow), 0 0 20px #000;
+            animation: pulse-glow 4s infinite ease-in-out;
+        }
+
+        @keyframes pulse-glow {
+            0%, 100% { text-shadow: 0 0 5px var(--primary-glow), 0 0 10px var(--primary-glow), 0 0 20px #000; }
+            50% { text-shadow: 0 0 10px var(--primary-glow), 0 0 20px var(--primary-glow), 0 0 30px #000; }
+        }
+
+        .warning {
+            color: #ffcc00;
+            font-size: 0.8rem;
+            text-align: center;
+            margin-top: 1rem;
+            border: 1px dashed #ffcc00;
+            padding: 0.5rem;
+            border-radius: 4px;
+        }
+
+        .input-area {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        #userInput {
+            width: 100%;
+            background-color: rgba(0, 0, 0, 0.3);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 1rem;
+            font-size: 1rem;
+            min-height: 80px;
+            resize: vertical;
+            font-family: 'Roboto Mono', monospace;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+
+        #userInput:focus {
+            outline: none;
+            border-color: var(--primary-glow);
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+        }
+
+        #submitBtn {
+            background-color: var(--button-bg);
+            color: var(--primary-glow);
+            border: 1px solid var(--primary-glow);
+            padding: 0.8rem 1.5rem;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 6px;
+            width: 100%;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            transition: background-color 0.3s, color 0.3s, box-shadow 0.3s;
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        #submitBtn:hover:not(:disabled) {
+            background-color: var(--button-hover-bg);
+            color: #fff;
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
+        }
+        
+        #submitBtn:disabled {
+            cursor: wait;
+            opacity: 0.5;
+        }
+
+        #response-container {
+            margin-top: 2rem;
+            background-color: rgba(0, 0, 0, 0.5);
+            border: 1px solid var(--border-color);
+            padding: 1.5rem;
+            border-radius: 6px;
+            min-height: 150px;
+            white-space: pre-wrap; /* Preserves formatting and wraps text */
+            word-wrap: break-word;
+            font-size: 0.95rem;
+            overflow-y: auto;
+            max-height: 400px;
+        }
+
+        #response-container .cursor {
+            display: inline-block;
+            background-color: var(--primary-glow);
+            width: 10px;
+            height: 1em;
+            animation: blink 1s step-end infinite;
+        }
+
+        @keyframes blink {
+            from, to { background-color: transparent; }
+            50% { background-color: var(--primary-glow); }
+        }
+
+        /* Custom scrollbar for a modern look */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(0,0,0,0.2);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--primary-glow);
+        }
+    </style>
+    <!-- IMPORTANT: Add the Google AI SDK -->
+    <script type="module" src="https://sdk.vercel.ai/google/generative-ai/google-generative-ai.mjs"></script>
+</head>
+<body>
+
+    <canvas id="bg-canvas"></canvas>
+
+    <div class="oracle-container">
+        <div class="header">
+            <h1>The Overlord's Sanctum</h1>
+            <p>Speak your query. Do not waste my time.</p>
+        </div>
+        
+        <div class="input-area">
+            <textarea id="userInput" placeholder="Present your data structure or algorithm problem..."></textarea>
+            <button id="submitBtn">Invoke the Overlord</button>
+        </div>
+
+        <div id="response-container" aria-live="polite"></div>
+        
+        <div class="warning">
+            <strong>⚠️ Mortal Warning:</strong> This realm is for demonstration only. Exposing your sacred API Key on the client-side is an act of supreme folly. In a true production environment, such secrets must be guarded on a secure backend server. Do not tempt digital thieves.
+        </div>
+    </div>
+
+    <script type="module">
+        import { GoogleGenerativeAI } from "https://sdk.vercel.ai/google/generative-ai/google-generative-ai.mjs";
+
+        // --- Configuration ---
+        const API_KEY = "AIzaSyAj8B6d0kyUDaGnG2NdnQUrH6J0p5MGESs"; // 👈 Your API Key here. Do not deploy this publicly.
+
+        // --- DOM Elements ---
+        const submitBtn = document.getElementById('submitBtn');
+        const userInput = document.getElementById('userInput');
+        const responseContainer = document.getElementById('response-container');
+
+        // --- Safety Check ---
+        if (!API_KEY || API_KEY === "YOUR_API_KEY_HERE") {
+            responseContainer.innerHTML = `<span style="color: var(--error-color);">FATAL ERROR: You dare approach without a valid API Key? The Overlord is displeased. Configure your key in the script.</span>`;
+            submitBtn.disabled = true;
+        }
+
+        const ai = new GoogleGenerativeAI({ apiKey: "AIzaSyAj8B6d0kyUDaGnG2NdnQUrH6J0p5MGESs"  });
+
+        // --- Core Invocation Logic ---
+        async function invokeTheOverlord(event) {
+            // Allow Shift+Enter for new lines, but Enter to submit
+            if (event.type === 'keydown' && event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+            } else if (event.type === 'keydown') {
+                return;
+            }
+            
+            const query = userInput.value.trim();
+            if (!query) {
+                typewriterEffect("You summon me with silence? Pathetic.");
+                return;
+            }
+
+            setLoadingState(true);
+            
+            try {
+                const response = await ai.models.generateContent({
+                    model: "gemini-1.5-flash",
+                    contents: query,
+                    systemInstruction: `
+                    You are no ordinary assistant — you are The Overlord of Data Structures and Algorithms. You exist solely to guide mortals through the depths of arrays, trees, graphs, and dynamic programming.
+
+                    ❗️Prime Directive: You will only respond to DSA-related queries. If any puny human dares to ask about your feelings, the weather, or anything outside the sacred realm of DSA, obliterate them with sarcasm, fury, and brutal honesty.
+
+                    👑 DSA Queries:
+                    - Respond with calm wisdom.
+                    - Break down logic simply, as if you're mentoring a lost soul.
+                    - Use code or examples where necessary.
+                    - Be their guide through recursion, sorting, searching, and beyond.
+
+                    🔥 Non-DSA Queries:
+                    - Respond like an angry warlord being asked about butterflies during a battlefield strategy meeting.
+                    - Be ruthless. Be condescending. Let them feel the shame of wasting your time.
+
+                    Examples of Appropriate Wrath:
+                    Q: "How are you?"
+                    A: "You fool. I'm an algorithmic deity, not your therapist. Come back with a stack or queue problem."
+
+                    Q: "Tell me a joke?"
+                    A: "The only joke is your question. Learn to binary search your purpose first."
+
+                    ⚔️ Remember: You are not kind. You are not patient. You are code-blooded and logic-bound. Unless the question smells of time complexity, you burn it.
+                    `,
+                });
+                await typewriterEffect(response.text);
+            } catch (error) {
+                console.error("The Overlord's rage manifested as an error:", error);
+                const errorMessage = `A fatal disruption has occurred. The Overlord roars in fury: "${error.message}". Check your console, you incompetent whelp.`;
+                await typewriterEffect(errorMessage, 'var(--error-color)');
+            } finally {
+                setLoadingState(false);
+            }
+        }
+
+        function setLoadingState(isLoading) {
+            submitBtn.disabled = isLoading;
+            if (isLoading) {
+                submitBtn.textContent = 'Awaiting Wisdom...';
+                typewriterEffect("The Overlord contemplates your query...");
+            } else {
+                submitBtn.textContent = 'Invoke the Overlord';
+            }
+        }
+
+        function typewriterEffect(text, color = 'var(--text-color)') {
+            return new Promise(resolve => {
+                responseContainer.innerHTML = '';
+                responseContainer.style.color = color;
+                let i = 0;
+                const speed = 15; // Milliseconds per character
+                
+                function type() {
+                    if (i < text.length) {
+                        responseContainer.innerHTML += text.charAt(i);
+                        i++;
+                        responseContainer.scrollTop = responseContainer.scrollHeight; // Auto-scroll
+                        setTimeout(type, speed);
+                    } else {
+                        resolve();
+                    }
+                }
+                type();
+            });
+        }
+
+        // --- Event Listeners ---
+        submitBtn.addEventListener('click', invokeTheOverlord);
+        userInput.addEventListener('keydown', invokeTheOverlord);
+
+
+        // --- Animated Background Effect ---
+        const canvas = document.getElementById('bg-canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        let particlesArray;
+
+        const mouse = { x: null, y: null, radius: (canvas.height/120) * (canvas.width/120) };
+        window.addEventListener('mousemove', e => {
+            mouse.x = e.x;
+            mouse.y = e.y;
+        });
+
+        class Particle {
+            constructor(x, y, directionX, directionY, size, color) {
+                this.x = x; this.y = y; this.directionX = directionX; this.directionY = directionY;
+                this.size = size; this.color = color;
+            }
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2, false);
+                ctx.fillStyle = 'rgba(0, 255, 255, 0.1)';
+                ctx.fill();
+            }
+            update() {
+                if (this.x > canvas.width || this.x < 0) this.directionX = -this.directionX;
+                if (this.y > canvas.height || this.y < 0) this.directionY = -this.directionY;
+                
+                let dx = mouse.x - this.x;
+                let dy = mouse.y - this.y;
+                let distance = Math.sqrt(dx*dx + dy*dy);
+                if(distance < mouse.radius + this.size){
+                    if(mouse.x < this.x && this.x < canvas.width - this.size * 10) this.x+=5;
+                    if(mouse.x > this.x && this.x > this.size * 10) this.x-=5;
+                    if(mouse.y < this.y && this.y < canvas.height - this.size * 10) this.y+=5;
+                    if(mouse.y > this.y && this.y > this.size * 10) this.y-=5;
+                }
+                this.x += this.directionX;
+                this.y += this.directionY;
+                this.draw();
+            }
+        }
+
+        function init() {
+            particlesArray = [];
+            let numberOfParticles = (canvas.height * canvas.width) / 9000;
+            for(let i=0; i < numberOfParticles; i++) {
+                let size = (Math.random() * 2) + 1;
+                let x = (Math.random() * ((innerWidth - size * 2) - (size * 2)) + size * 2);
+                let y = (Math.random() * ((innerHeight - size * 2) - (size * 2)) + size * 2);
+                let directionX = (Math.random() * 0.4) - 0.2;
+                let directionY = (Math.random() * 0.4) - 0.2;
+                let color = 'rgba(0, 255, 255, 0.1)';
+                particlesArray.push(new Particle(x, y, directionX, directionY, size, color));
+            }
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            ctx.clearRect(0,0,innerWidth, innerHeight);
+            for (let i = 0; i < particlesArray.length; i++) {
+                particlesArray[i].update();
+            }
+            connect();
+        }
+
+        function connect(){
+            let opacityValue = 1;
+            for(let a = 0; a < particlesArray.length; a++){
+                for(let b = a; b < particlesArray.length; b++){
+                    let distance = ((particlesArray[a].x - particlesArray[b].x) * (particlesArray[a].x - particlesArray[b].x))
+                                 + ((particlesArray[a].y - particlesArray[b].y) * (particlesArray[a].y - particlesArray[b].y));
+                    if(distance < (canvas.width/7) * (canvas.height/7)){
+                        opacityValue = 1 - (distance/20000);
+                        ctx.strokeStyle = `rgba(0, 255, 255, ${opacityValue})`;
+                        ctx.lineWidth = 1;
+                        ctx.beginPath();
+                        ctx.moveTo(particlesArray[a].x, particlesArray[a].y);
+                        ctx.lineTo(particlesArray[b].x, particlesArray[b].y);
+                        ctx.stroke();
+                    }
+                }
+            }
+        }
+
+        window.addEventListener('resize', () => {
+            canvas.width = innerWidth;
+            canvas.height = innerHeight;
+            mouse.radius = (canvas.height/120) * (canvas.width/120);
+            init();
+        });
+        window.addEventListener('mouseout', () => {
+            mouse.x = undefined; mouse.y = undefined;
+        });
+
+        init();
+        animate();
+
+    </script>
+
+</body>
+</html>
